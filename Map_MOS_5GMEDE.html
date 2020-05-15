@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>5GMEDE MOS</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js" integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw==" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.3.0/dist/leaflet.markercluster.js"></script>
+    <script src="Modelo_knn.js"></script>
+
+   
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .legend {
+        line-height: 18px;
+        height: 200px;
+        width: 100px;
+        color: #555;
+        background: rgb(255, 255, 255);
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;            
+            margin-right: 8px;
+            opacity: 05;
+        }
+        .leaflet-control-layers-group-name {
+        font-weight: bold;        
+        margin-bottom: .2em;
+        margin-left: 5px;
+        }
+
+        .leaflet-control-layers-group {
+        background: rgb(255, 255, 255);
+        margin-bottom: .100em;
+        }
+
+        .leaflet-control-layers-scrollbar {
+            
+        overflow-y: scroll;
+        padding-right: 200px;
+        }
+
+        
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>    
+    <script src="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jieter/Leaflet-semicircle/Semicircle.js"></script>    
+    <script src="https://cdn.jsdelivr.net/gh/anomal/RainbowVis-JS/rainbowvis.js"></script> 
+    
+    
+    <script>
+        //<link rel="stylesheet" href="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.css" />
+
+        var geojsonFeature = $.ajax( {
+            url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/MOS.json",
+            //url: "inputs/MOS.json",
+            dataType: "json",
+            success: console.log("Data successfully loaded."),
+            error: function(xhr) {
+                alert(xhr.statusText)
+            }
+        })
+
+        var videoMOS = $.ajax( {
+            url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/VideoMOS.json",
+            //url: "inputs/MOS.json",
+            dataType: "json",
+            success: console.log("Data successfully loaded."),
+            error: function(xhr) {
+                alert(xhr.statusText)
+            }
+        })
+
+        var RSRP_BestServer = $.ajax( {
+            url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/RSRP_BestServer.json",
+            //url: "inputs/MOS.json",
+            dataType: "json",
+            success: console.log("Data successfully loaded RSRP_BestServer."),
+            error: function(xhr) {
+                alert(xhr.statusText)
+            }
+        })
+
+        var RSRQ_BestServer = $.ajax( {
+            url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/RSRQ_BestServer.json",
+            //url: "inputs/MOS.json",
+            dataType: "json",
+            success: console.log("Data successfully loaded RSRQ_BestServer."),
+            error: function(xhr) {
+                alert(xhr.statusText)
+            }
+        })
+
+        var Cells_Energy = $.ajax( {
+            url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/Cells_Energy.json",
+            //url: "inputs/MOS.json",
+            dataType: "json",
+            success: console.log("Data successfully loaded Cells_Energy."),
+            error: function(xhr) {
+                alert(xhr.statusText)
+            }
+        })
+
+        var geojsonFeature_cells = $.ajax( {
+            url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/Cells_MOS.json",
+            dataType: "json",
+            success: console.log("Data successfully loaded geojsonFeature_cells."),
+            error: function(xhr) {
+                alert("Not found Cells.json")
+            }
+        })
+
+
+        
+        $.when(geojsonFeature,geojsonFeature_cells,RSRP_BestServer,RSRQ_BestServer).done(function() {
+        var CenterMap=[38.74835, -9.1977]  
+        
+        var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+			'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+        mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhhaW5hc2FyYWl2YSIsImEiOiJjazVxdWIwcWMwNXZ2M29wYjVhdWMwdWptIn0._MlDbldKD_Y407LNS5IXiA';
+        //isto Git e GitHub
+        var satelite= L.tileLayer(mbUrl,  {id: 'mapbox/satellite-v9',   attribution: mbAttr}),
+            grayscale=L.tileLayer(mbUrl, {id: 'mapbox/light-v9', attribution: mbAttr});
+            
+        //var layer_Points=L.layerGroup();    
+        var Layer_MOS=L.layerGroup();
+        var LayerAdd_Cells=L.layerGroup();
+        var LayerCells_Energy=L.layerGroup();
+        var Layer_RSRP_BestServer=L.layerGroup();
+        var Layer_RSRQ_BestServer=L.layerGroup();
+        var Layer_videoMOS=L.layerGroup();
+        var Layer_Modelo_knn=L.layerGroup();
+        var Layer_Modelo_knn_previsto=L.layerGroup();
+
+
+       
+
+
+        var map=L.map('map', {
+            center:CenterMap,
+            zoom: 15,
+            layers: [grayscale,Layer_MOS, LayerCells_Energy]
+        })
+
+        var baseLayers = {
+        "Satelite":satelite,
+        "Grayscale": grayscale        
+	    };    
+         
+        
+        
+        
+        
+        var numbers_mos=[]
+        var min_mos=2.8
+        var max_mos=5
+        for(var i=min_mos;i<=max_mos;){            
+            numbers_mos.push(i.toFixed(1))
+            i=i+0.1
+        }
+
+        
+        var numberOfItems = numbers_mos.length;
+        var rainbow = new Rainbow(); 
+        rainbow.setNumberRange(1, numberOfItems);
+        rainbow.setSpectrum('red', 'orange','limegreen');
+        
+        var colorsMOS=[]
+        for (var i = 1; i <= numberOfItems; i++) {
+            var hexColour = rainbow.colourAt(i);
+            colorsMOS.push('#' + hexColour)            
+        }       
+        
+        var color_mos_dict = {};
+        for(i=0; i<numbers_mos.length; i++){
+            color_mos_dict[numbers_mos[i]]=colorsMOS[i]
+            //console.log(colorsMOS[i])
+        }
+        //console.log(color_mos_dict)
+        
+
+        var mos_value= L.geoJSON(geojsonFeature.responseJSON, {
+            pointToLayer: function (feature, latlng) {
+                var mypopup = L.popup().setContent(latlng + ' WebBrowsingMOS: '+ feature.properties.WebBrowsingMOS)
+                var mymarker = L.circleMarker(latlng, {radius: 4, fillColor: color_mos_dict[feature.properties.WebBrowsingMOS] || 'None',color:color_mos_dict[feature.properties.WebBrowsingMOS] || 'None',weight: 1,           
+                                opacity: 1,
+                                fillOpacity: 0.8 })
+                mymarker.bindPopup(mypopup)
+                return mymarker
+            }
+        })
+        
+        mos_value.addTo(Layer_MOS)
+        
+        
+        var videoMOS_value=L.geoJSON(videoMOS.responseJSON, {
+            pointToLayer: function (feature, latlng) {
+                var mypopup = L.popup().setContent(latlng + ' videoMOS: '+ feature.properties.videoMOS)
+                var mymarker = L.circleMarker(latlng, {radius: 4, fillColor: color_mos_dict[feature.properties.VideoMOS] || 'None',color:color_mos_dict[feature.properties.VideoMOS] || 'None',weight: 1,           
+                                opacity: 1,
+                                fillOpacity: 0.8 })
+                mymarker.bindPopup(mypopup)
+                return mymarker
+            }
+        })
+        videoMOS_value.addTo(Layer_videoMOS)
+        
+        function getRadiusBand(feature){            
+            switch (feature.properties.band) {
+            case 800: return  110;
+            case 900: return  100;
+            case 1800:   return 90;            
+            case 2100:   return  70;
+            case 2600:   return  50;            
+            default:
+                return 100       
+        }}
+        getColorBand_dict={800:'#D5D4D4',
+           // 900: 'purple',
+            1800:'#BDBBBB',            
+             2100:  '#A3A3A3',
+            2600:  '#868686'}
+
+        var legend_Band = L.control({position: 'topleft'});
+        legend_Band.onAdd = function(map) {
+
+            var div = L.DomUtil.create('div', 'info legend')               
+            var labels = [800,1800,2100,2600]
+            var colors= []
+            for(i=0; i<labels.length;i++){
+                colors.push(getColorBand_dict[labels[i]])
+            }
+            
+
+            div.innerHTML += "<h3>Band</h3>";
+            for (var i = 0; i < labels.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + colors[i] + '"></i> <b>' +
+                    labels[i]+ ' MHz</b><br>'
+            }
+            return div;
+        };
+        legend_Band.addTo(map);
+
+        function getColorBand(feature){
+            return getColorBand_dict[feature.properties.band] ||'None'
+            /*switch (feature.properties.band) {
+            case 800: return  'DimGrey';
+            case 900: return 'purple';
+            case 1800:   return 'pink';            
+            case 2100:   return  'blue';
+            case 2600:   return  'green';            
+            default:
+                return '#D0D0D0'*/
+        }
+            
+        
+
+        function setStyle_All_Cells(feature) {
+            return {radius: getRadiusBand(feature),
+            fillColor:  getColorBand(feature),            
+            color: "#666666",
+            fillOpacity: 0.8,
+            opacity: 0.8,
+            weight: 0.5
+            }
+        }
+
+        var cells = L.geoJSON(geojsonFeature_cells.responseJSON, {
+        pointToLayer: function (feature, latlng) {
+            var mypopup =L.popup().setContent(feature.properties.popupContent)          
+            var mymarker = L.semiCircle(latlng, setStyle_All_Cells(feature))
+                            .setDirection(feature.properties.azimuth, 50)
+            mymarker.bindPopup(mypopup)            
+            return mymarker;
+        }
+        })
+
+        cells.addTo(LayerAdd_Cells)
+        var greenIcon = new L.Icon({
+        iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+        });
+        
+        L.geoJSON(Cells_Energy.responseJSON, {
+        pointToLayer: function (feature, latlng) {
+            var mypopup =L.popup().setContent("Site com Consumo Energético "+ feature.properties.SiteName)          
+            var mymarker = L.marker(latlng, {icon: greenIcon})
+            mymarker.bindPopup(mypopup)            
+            return mymarker;
+        }
+        }).addTo(LayerCells_Energy)
+
+        for(i=0;i<Point_estimado.length; i++){
+            var mymarker = L.circleMarker(L.latLng(Point_estimado[i]), {radius:5, fillColor:'red',weight:0,opacity: 1,fillOpacity: 0.8} )
+            var mypopup =L.popup().setContent("latlng: " + L.latLng(Point_estimado[i]))
+            mymarker.bindPopup(mypopup)
+            mymarker.addTo(Layer_Modelo_knn_previsto)
+        }
+
+        for(i=0;i<Point_real.length; i++){
+            var mymarker = L.circleMarker(L.latLng(Point_real[i]), {radius:5, fillColor:'green',weight:0,opacity: 1,fillOpacity: 0.8} )
+            var mypopup =L.popup().setContent("latlng: " + L.latLng(Point_real[i]))
+            mymarker.bindPopup(mypopup)
+            mymarker.addTo(Layer_Modelo_knn)
+        }     
+
+        var popup = L.popup();
+
+        function onMapClick(e) {
+            popup
+                .setLatLng(e.latlng)
+                .setContent("You clicked the map at " + e.latlng.toString())
+                .openOn(map);
+        }
+
+        //map.on('click', onMapClick);
+        
+        var MOS_legend = L.control({position: 'bottomright'});
+
+        MOS_legend.onAdd = function(map) {
+
+            var div = L.DomUtil.create('div', 'info legend')               
+            var labels = [5.0, 4.5, 4.0, 3.0]
+            var colors= []
+            for(i=0; i<labels.length;i++){
+                colors.push(color_mos_dict[labels[i].toFixed(1)])
+            }
+            
+
+            div.innerHTML += "<h3>MOS</h3>";
+            for (var i = 0; i < labels.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + colors[i] + '"></i> <b>' +
+                    labels[i].toFixed(1)+ '</b><br>'
+            }
+            return div;
+        };
+        MOS_legend.addTo(map);
+        // ##### Criar o mapa de RSRP ##### RSRP_BestServer
+
+
+        function color_gradient(min_value,max_value, color1, color2, color3){
+            var numbers_colors=[]
+            //var min_value=50
+            //var max_value=129
+            for(var i=min_value;i<=max_value;){            
+                numbers_colors.push(i.toFixed(0))
+                i=i+1
+            }
+            var numberOfItems = numbers_colors.length;
+            var rainbow = new Rainbow(); 
+            rainbow.setNumberRange(1, numberOfItems);
+            rainbow.setSpectrum(color1, color2,color3);
+            
+            var colorsFootprint=[]
+            for (var i = 1; i <= numberOfItems; i++) {
+                var hexColour = rainbow.colourAt(i);
+                colorsFootprint.push('#' + hexColour)            
+            }       
+            
+            var Colors_Signal_dict = {};
+            for(i=0; i<numbers_colors.length; i++){
+                Colors_Signal_dict[numbers_colors[i]]=colorsFootprint[i]
+                
+            } 
+            return Colors_Signal_dict       
+        }    
+
+        Colors_Signal_dict=color_gradient(50,128, 'red', 'yellow','blue')
+        //console.log(Colors_Signal_dict)
+        var RSRP_BestServer_value= L.geoJSON(RSRP_BestServer.responseJSON, {
+            pointToLayer: function (feature, latlng) {
+                var mypopup = L.popup().setContent("latlng: " +  latlng + ' RSRP: '+ feature.properties.RSRP)
+                var mymarker = L.circleMarker(latlng, {radius: 4, fillColor: Colors_Signal_dict[Math.abs(feature.properties.RSRP.toFixed(0))] || 'None',
+                color:Colors_Signal_dict[Math.abs(feature.properties.RSRP.toFixed(0))] || 'None',weight: 1,              
+                                opacity: 1,
+                                fillOpacity: 0.8 })
+                
+                mymarker.bindPopup(mypopup)
+                return mymarker
+            }
+        })
+                
+        RSRP_BestServer_value.addTo(Layer_RSRP_BestServer)
+
+        Colors_Signal_RSRQ_dict=color_gradient(3,20, 'red', 'yellow','blue')
+        //console.log(Colors_Signal_dict)
+        L.geoJSON(RSRQ_BestServer.responseJSON, {
+            pointToLayer: function (feature, latlng) {
+                var mypopup = L.popup().setContent("latlng: " +  latlng + ' RSRP: '+ feature.properties.RSRP)
+                var mymarker = L.circleMarker(latlng, {radius: 4, fillColor: Colors_Signal_RSRQ_dict[Math.abs(feature.properties.RSRQ.toFixed(0))] || 'None',
+                color:Colors_Signal_RSRQ_dict[Math.abs(feature.properties.RSRQ.toFixed(0))] || 'None',weight: 1,              
+                                opacity: 1,
+                                fillOpacity: 0.8 })
+                
+                mymarker.bindPopup(mypopup)
+                return mymarker
+            }
+        }).addTo(Layer_RSRQ_BestServer)
+
+        var legend_RSRP = L.control({position: 'topleft'});
+        legend_RSRP.onAdd = function(map) {
+
+            var div = L.DomUtil.create('div', 'info legend')               
+            var labels = [-50,-60,-70,-80,-90,-100,-110,-120]
+            var colors= []
+            for(i=0; i<labels.length;i++){
+                colors.push(Colors_Signal_dict[Math.abs(labels[i])])
+            }
+            
+
+            div.innerHTML += "<h3>RSRP</h3>";
+            for (var i = 0; i < labels.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + colors[i] + '"></i> <b>' +
+                    labels[i]+ ' dBm</b><br>'
+            }
+            return div;
+        };
+        legend_RSRP.addTo(map);
+
+        
+        var legend_RSRQ = L.control({position: 'bottomleft'});
+
+        legend_RSRQ.onAdd = function(map) {
+
+            var div = L.DomUtil.create('div', 'info legend')               
+            var labels = [-4,-8,-12,-16,-20]
+            var colors= []
+            for(i=0; i<labels.length;i++){
+                colors.push(Colors_Signal_RSRQ_dict[Math.abs(labels[i])])
+            }
+            
+
+            div.innerHTML += "<h3>RSRQ</h3>";
+            for (var i = 0; i < labels.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + colors[i] + '"></i> <b>' +
+                    labels[i]+ ' dB</b><br>'
+            }
+            return div;
+        };
+        legend_RSRQ.addTo(map);
+
+        
+        
+        var groupedOverlays = {
+        "Measures":{
+            "WebBrowsingMOS":Layer_MOS,    
+            "VideoMOS":Layer_videoMOS,          
+            "RSRP":Layer_RSRP_BestServer,
+            "RSRQ":Layer_RSRQ_BestServer,
+            "Modelo_knn_Real":Layer_Modelo_knn  
+                     
+        },
+        "Cells":{"Cells":LayerAdd_Cells,
+        "Cells_Energy" : LayerCells_Energy,
+        "Modelo_knn_Estimado":Layer_Modelo_knn_previsto
+            }
+        }
+
+        
+
+        //window.alert("clicked on base layer: " + eventLayer.name);
+        var options = {       
+        exclusiveGroups: ["Measures"],
+        collapsed:false,        
+        groupCheckboxes: false
+        };
+        //Adicionar as layers no mapa
+        MOS_legend.addTo(map);
+        currentLegend = MOS_legend;
+
+
+        map.on('overlayadd', function (eventLayer) {
+            if (eventLayer.name === 'Layer_MOS') {
+                map.removeControl(currentLegend );
+                currentLegend = MOS_legend;
+                MOS_legend.addTo(map);
+            }
+            else if  (eventLayer.name === 'Layer_RSRP_BestServer') {
+                map.removeControl(currentLegend );
+                currentLegend = legend_RSRP;
+                legend_RSRP.addTo(map);
+            }
+            else if  (eventLayer.name === 'Layer_RSRQ_BestServer') {
+            map.removeControl(currentLegend );
+                currentLegend = legend_RSRQ;
+                legend_RSRQ.addTo(map);
+            }
+            else if  (eventLayer.name === 'LayerAdd_Cells') {
+            map.removeControl(currentLegend );
+                currentLegend = legend_Band;
+                legend_Band.addTo(map);
+            }
+        })
+
+
+       
+
+        var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays, options);
+        map.addControl(layerControl);
+       
+       // Add and remove legend from layers
+       
+    });
+
+    </script>
+</body>
+
+</html>
