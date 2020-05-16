@@ -44,14 +44,16 @@
     <div id='map'></div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>    
     <script src="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.js"></script>
-    <script src="./Functions/read_csv.js" type="text/javascript"></script> 
-    <script src="./Functions/color_gradient.js" type="text/javascript"></script> 
+    <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/read_csv.js" type="text/javascript"></script> 
+    <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/color_gradient.js" type="text/javascript"></script> 
     
     <script>
+        
 
     var csv_file=$.ajax({
                 type: "GET",                
-                url: "./Inputs/ErrorMapping.csv",
+                //url: "./Inputs/ErrorMapping.csv",
+                url: "https://raw.githubusercontent.com/saraivathaina/tool_visualization_garmio/master/Inputs/ErrorMapping.csv",
                 dataType: "csv",
                 async: false,
                 success: console.log('ok ErrorMapping.csv')
