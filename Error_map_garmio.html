@@ -44,6 +44,7 @@
     <div id='map'></div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>    
     <script src="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jieter/Leaflet-semicircle/Semicircle.js"></script>    
     <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/read_csv.js" type="text/javascript"></script> 
     <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/color_gradient.js" type="text/javascript"></script> 
     
@@ -62,9 +63,18 @@
     var input_file_json=csvJSON(csv_file_String)
     Colors_Error_dict=color_gradient(0,500, 'limegreen', "yellow",'red')  
     
+    var geojsonFeature_cells = $.ajax( {
+            //url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/Cells_MOS.json",
+            url:"https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/Cells.json",
+            dataType: "json",
+            success: console.log("Data successfully loaded geojsonFeature_cells."),
+            error: function(xhr) {
+                alert("Not found Cells.json")
+            }
+        })
 
 
-    $.when(input_file_json).done(function() {  
+    $.when(geojsonFeature_cells,input_file_json).done(function() {  
     var CenterMap=[parseFloat(input_file_json[0]["Latitude DT"]), parseFloat(input_file_json[0]["Longitude DT"])]
     
     var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
@@ -76,9 +86,12 @@
         
     var LayerAdd_DriveTest=L.layerGroup();
     var LayerAdd_Trace=L.layerGroup();
+    var LayerAdd_Cells=L.layerGroup();
+
     var overlayMaps = {
     "DriveTest": LayerAdd_DriveTest,
-    "Trace": LayerAdd_Trace
+    "Trace": LayerAdd_Trace,
+    "Cells":LayerAdd_Cells
     };
 
     var mymap=L.map('map', {
@@ -117,7 +130,52 @@
     }
 
     //var layerControl = L.control.groupedLayers(baseLayers);
+    function getRadiusBand(feature){            
+            switch (feature.properties.band) {
+            case 800: return  110;
+            case 900: return  100;
+            case 1800:   return 90;            
+            case 2100:   return  70;
+            case 2600:   return  50;            
+            default:
+                return 100       
+        }}
+    getColorBand_dict={800:'#D5D4D4',
+           // 900: 'purple',
+            1800:'#BDBBBB',            
+             2100:  '#A3A3A3',
+            2600:  '#868686'
+    }
+    function getColorBand(feature){
+            return getColorBand_dict[feature.properties.band] ||'None'
+    }
+    function setStyle_All_Cells(feature) {
+            return {radius: getRadiusBand(feature),
+            fillColor:  getColorBand(feature),            
+            color: "#666666",
+            fillOpacity: 0.8,
+            opacity: 0.8,
+            weight: 0.5
+            }
+        }
     
+    var cells = L.geoJSON(geojsonFeature_cells.responseJSON, {
+        
+        pointToLayer: function (feature, latlng) {
+            
+            var mypopup =L.popup().setContent(feature.properties.popupContent)          
+            var mymarker = L.semiCircle(latlng, setStyle_All_Cells(feature))
+                            .setDirection(feature.properties.azimuth, 50)
+            mymarker.bindPopup(mypopup)            
+            return mymarker;
+        //        return false;
+        }
+        })
+
+   
+    
+    cells.addTo(LayerAdd_Cells)
+
     var legend_Error_positioned = L.control({position: 'bottomleft'});
         legend_Error_positioned.onAdd = function(map) {
             var div = L.DomUtil.create('div', 'info legend')               
