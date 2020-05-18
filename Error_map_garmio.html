@@ -214,7 +214,26 @@
         legend_Error_positioned.addTo(mymap);
     
     
-    
+        var legend_Band = L.control({position: 'topleft'});
+        legend_Band.onAdd = function(map) {
+
+            var div = L.DomUtil.create('div', 'info legend')               
+            var labels = [800,1800,2100,2600]
+            var colors= []
+            for(i=0; i<labels.length;i++){
+                colors.push(getColorBand_dict[labels[i]])
+            }
+            
+
+            div.innerHTML += "<h3>Band</h3>";
+            for (var i = 0; i < labels.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + colors[i] + '"></i> <b>' +
+                    labels[i]+ ' MHz</b><br>'
+            }
+            return div;
+        };
+        legend_Band.addTo(mymap);
     
     
     
