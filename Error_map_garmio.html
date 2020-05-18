@@ -179,7 +179,8 @@
     var legend_Error_positioned = L.control({position: 'bottomleft'});
         legend_Error_positioned.onAdd = function(map) {
             var div = L.DomUtil.create('div', 'info legend')               
-            var labels = [10, 50, 100, 250,350,500]
+            //var labels = [10, 50, 100, 250,350,500]
+	    var labels = [100, 200,500]
             var colors= []
             for(i=0; i<labels.length;i++){
                 colors.push(Colors_Error_dict[Math.abs(labels[i])])
