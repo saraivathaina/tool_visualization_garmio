@@ -24,8 +24,8 @@
 
         .legend {
         line-height: 18px;
-        height: 200px;
-        width: 100px;
+        height: 120px;
+        width: 150px;
         color: #555;
         background: rgb(255, 255, 255);
         }
@@ -46,7 +46,7 @@
     <script src="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/jieter/Leaflet-semicircle/Semicircle.js"></script>    
     <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/read_csv.js" type="text/javascript"></script> 
-    <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/color_gradient.js" type="text/javascript"></script> 
+    <!--<script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/color_gradient.js" type="text/javascript"></script>  -->
     
     <script>
         
@@ -61,11 +61,11 @@
             });    
     var csv_file_String=String(csv_file.responseText)
     var input_file_json=csvJSON(csv_file_String)
-    Colors_Error_dict=color_gradient(0,500, 'limegreen', "yellow",'red')  
+    //Colors_Error_dict=color_gradient(0,500, 'limegreen', "yellow",'red')  
     
     var geojsonFeature_cells = $.ajax( {
             //url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/Cells_MOS.json",
-            url:"https://raw.githubusercontent.com/saraivathaina/tool_visualization_garmio/master/inputs/Cells.json",
+            url:"https://raw.githubusercontent.com/saraivathaina/tool_visualization_garmio/master/Inputs/Cells.json",
             dataType: "json",
             success: console.log("Data successfully loaded geojsonFeature_cells."),
             error: function(xhr) {
@@ -106,9 +106,9 @@
     
       
     function getColorError(value){
-        if(value<100){
+        if(value<=100){
             return "limegreen"
-        }else if(value>200 && value<300){
+        }else if(value>100 && value<=200){
             return "yellow"
         }else{
             return "red"
@@ -135,8 +135,8 @@
         msg_cell=input_file_json[0][Object.keys(input_file_json[i])[Object.keys(input_file_json[0]).length-1]]//Selecionar a ultima coluna
         var error=Math.abs((parseFloat(input_file_json[i]["Error"])*1000).toFixed(0))
         var mypopup = L.popup().setContent("Error:<br>"+error+"metros <br>"+msg_cell)
-        L.circleMarker(L.latLng(Point),{fillColor: Colors_Error_dict[error] || 'black',
-                            color:Colors_Error_dict[error] || 'black', radius: 5,              
+        L.circleMarker(L.latLng(Point),{fillColor: getColorError(error) ,
+                            color:getColorError(error) , radius: 5,              
                                 opacity: 1,
                                 fillOpacity: 1 } )
             .bindPopup(mypopup)            
@@ -195,15 +195,16 @@
         legend_Error_positioned.onAdd = function(map) {
             var div = L.DomUtil.create('div', 'info legend')               
             //var labels = [10, 50, 100, 250,350,500]
-	    var labels = [100, 200,500]
+	    
+            var values_labels = [100, 200,500]
             var colors= []
-            for(i=0; i<labels.length;i++){
-                colors.push(Colors_Error_dict[Math.abs(labels[i])])
+            for(i=0; i<values_labels.length;i++){
+                colors.push(getColorError(Math.abs(values_labels[i])))
             }
             
-
+            var labels = ["<100", ">100 e <200", ">200"]
             div.innerHTML += "<h3>Error in Meters</h3>";
-            for (var i = 0; i < labels.length; i++) {
+            for (var i = 0; i < colors.length; i++) {
                 div.innerHTML +=
                     '<i style="background:' + colors[i] + '"></i> <b>' +
                     labels[i]+ ' meters</b><br>'
