@@ -65,7 +65,7 @@
     
     var geojsonFeature_cells = $.ajax( {
             //url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/Cells_MOS.json",
-            url:"https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/Cells.json",
+            url:"https://raw.githubusercontent.com/saraivathaina/tool_visualization_garmio/master/inputs/Cells.json",
             dataType: "json",
             success: console.log("Data successfully loaded geojsonFeature_cells."),
             error: function(xhr) {
@@ -105,14 +105,24 @@
 	    }; 
     
       
-    
+    function getColorError(value){
+        if(value<100){
+            return "limegreen"
+        }else if(value>200 && value<300){
+            return "yellow"
+        }else{
+            return "red"
+        }
+        
+    }
+
     for(var i=0; i<input_file_json.length;i++){
         var Point=[parseFloat(input_file_json[i]["Latitude DT"]), parseFloat(input_file_json[i]["Longitude DT"])]
         msg_cell=input_file_json[i][Object.keys(input_file_json[i])[Object.keys(input_file_json[i]).length-1]]//Selecionar a ultima coluna
         var error=Math.abs((parseFloat(input_file_json[i]["Error"])*1000).toFixed(0))
         var mypopup = L.popup().setContent("Error:<br>"+error+"metros <br>"+msg_cell)
-        L.circleMarker(L.latLng(Point),{fillColor: Colors_Error_dict[error] || 'black',
-                            color:Colors_Error_dict[error] || 'black', radius: 5,              
+        L.circleMarker(L.latLng(Point),{fillColor: getColorError(error) ,
+                            color:getColorError(error) , radius: 5,              
                                 opacity: 1,
                                 fillOpacity: 1 } )
         .addTo(LayerAdd_DriveTest) 
@@ -123,8 +133,12 @@
     for(var i=0; i<input_file_json.length;i++){
         var Point=[parseFloat(input_file_json[i]["Lat Trace"]), parseFloat(input_file_json[i]["Long Trace"])]
         msg_cell=input_file_json[0][Object.keys(input_file_json[i])[Object.keys(input_file_json[0]).length-1]]//Selecionar a ultima coluna
-        var mypopup = L.popup().setContent(msg_cell)
-        L.circleMarker(L.latLng(Point),{radius:5, fillColor:'blue',weight:0,opacity: 1,fillOpacity: 0.8} )
+        var error=Math.abs((parseFloat(input_file_json[i]["Error"])*1000).toFixed(0))
+        var mypopup = L.popup().setContent("Error:<br>"+error+"metros <br>"+msg_cell)
+        L.circleMarker(L.latLng(Point),{fillColor: Colors_Error_dict[error] || 'black',
+                            color:Colors_Error_dict[error] || 'black', radius: 5,              
+                                opacity: 1,
+                                fillOpacity: 1 } )
             .bindPopup(mypopup)            
             .addTo(LayerAdd_Trace) 
     }
@@ -176,7 +190,8 @@
     
     cells.addTo(LayerAdd_Cells)
 
-    var legend_Error_positioned = L.control({position: 'bottomleft'});
+    
+        var legend_Error_positioned = L.control({position: 'bottomleft'});
         legend_Error_positioned.onAdd = function(map) {
             var div = L.DomUtil.create('div', 'info legend')               
             //var labels = [10, 50, 100, 250,350,500]
