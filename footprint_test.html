@@ -154,8 +154,9 @@
                 var mypopup=L.popup().setContent('Traces: <br>'+feature.properties.popupContent)                
                 var pointTrace=feature.properties.point_traces
                 var pointTrace_latlng=L.latLng(pointTrace[1],pointTrace[0])
-                var mymarker=L.circleMarker(pointTrace_latlng,{color: getColorError(feature.properties.Error),
+                var mymarker=L.circleMarker(pointTrace_latlng,{color: 'black',
                     fillColor: getColorError(feature.properties.Error), 
+                    weight: 0.5, 
                     radius:5,
                     opacity: 1,
                     fillOpacity: 0.8 })
