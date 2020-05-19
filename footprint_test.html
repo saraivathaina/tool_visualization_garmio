@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>HeatMap_Footprints</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.3.0/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js" integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw==" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.3.0/dist/leaflet.markercluster.js"></script>
+    
+
+   
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .legend {
+        line-height: 18px;
+        height: 200px;
+        width: 100px;
+        color: #555;
+        background: blanchedalmond;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 05;
+        }
+        .leaflet-control-layers-group-name {
+        font-weight: bold;        
+        margin-bottom: .2em;
+        margin-left: 5px;
+        }
+
+        .leaflet-control-layers-group {
+        background: blanchedalmond;
+        margin-bottom: .100em;
+        }
+
+        .leaflet-control-layers-scrollbar {
+            
+        overflow-y: scroll;
+        padding-right: 200px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>    
+    <script src="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jieter/Leaflet-semicircle/Semicircle.js"></script>  
+    <script src="https://cdn.jsdelivr.net/gh/anomal/RainbowVis-JS/rainbowvis.js"></script> 
+    <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/color_gradient.js" type="text/javascript"></script>
+    <script src="./Functions/make_footprint_grid.js"></script>  
+    
+    
+    <script>
+        //<link rel="stylesheet" href="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.css" />
+        var fileName_footprint='4G - 4LB02833B_HOTEL_ALIF - 268-1-2833-4LB02833B_HOTEL_ALIF.json'
+                                                    
+        var footprint = $.ajax( {
+            url: './Inputs/Footprints/'+fileName_footprint,
+            //url: "matrix_mask_list.json",
+            dataType: "json",
+            success: console.log("Data successfully loaded."),
+            error: function(xhr) {
+                alert(xhr.statusText)
+            }
+        })
+
+        
+        
+
+        
+        $.when(footprint).done(function() {
+        var CenterMap=[38.7421073729593, -9.14334066270453]  
+        
+        var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+			'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+        mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhhaW5hc2FyYWl2YSIsImEiOiJjazVxdWIwcWMwNXZ2M29wYjVhdWMwdWptIn0._MlDbldKD_Y407LNS5IXiA';
+        //isto Git e GitHub
+        var satelite= L.tileLayer(mbUrl,  {id: 'mapbox/satellite-v9',   attribution: mbAttr}),
+            grayscale=L.tileLayer(mbUrl, {id: 'mapbox/light-v9', attribution: mbAttr});            
+        
+        var LayerAdd_Cells=L.featureGroup();
+        //var LayerAdd_Cells_2=L.featureGroup();
+        var map=L.map('map', {
+            center:CenterMap,
+            zoom: 14,
+            layers: [satelite,LayerAdd_Cells]
+        })
+
+        var baseLayers = {
+        "Satelite":satelite,
+        "Grayscale": grayscale        
+	    }; 
+        
+        /* var numbers_colors=[]
+        var min_value=50
+        var max_value=129
+        for(var i=min_value;i<=max_value;){            
+            numbers_colors.push(i.toFixed(0))
+            i=i+1
+        }
+
+        
+        var numberOfItems = numbers_colors.length;
+        var rainbow = new Rainbow(); 
+        rainbow.setNumberRange(1, numberOfItems);
+        rainbow.setSpectrum('red', 'yellow','blue');
+        
+        var colorsFootprint=[]
+        for (var i = 1; i <= numberOfItems; i++) {
+            var hexColour = rainbow.colourAt(i);
+            colorsFootprint.push('#' + hexColour)            
+        }       
+        
+        var Colors_Signal_dict = {};
+        for(i=0; i<numbers_colors.length; i++){
+            Colors_Signal_dict[numbers_colors[i]]=colorsFootprint[i]
+            
+        }        */ 
+        var min_value=50
+        var max_value=129
+        Colors_Signal_dict=color_gradient(min_value,max_value, 'red', 'yellow','blue')  
+        make_grid(footprint,LayerAdd_Cells,Colors_Signal_dict)
+                
+
+        
+            var groupedOverlays = {
+        "Type Measures":{
+            "4LB02833B_HOTEL_ALIF":LayerAdd_Cells            
+        }
+        }  
+
+        var layer_legend=L.layerGroup(); 
+        var legend = L.control({position: 'bottomleft'});
+
+        legend.onAdd = function(map) {
+
+            var div = L.DomUtil.create('div', 'info legend')               
+            var labels = [-50,-60,-70,-80,-90,-100,-110,-120]
+            var colors= []
+            for(i=0; i<labels.length;i++){
+                colors.push(Colors_Signal_dict[Math.abs(labels[i])])
+            }
+            
+
+            div.innerHTML += "<h3>RSRP</h3>";
+            for (var i = 0; i < labels.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + colors[i] + '"></i> <b>' +
+                    labels[i]+ ' dBm</b><br>'
+            }
+            return div;
+        };
+        legend.addTo(map);
+
+        var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays);
+
+       
+        map.addControl(layerControl);
+       
+
+
+        });
+
+
+    </script>
+</body>
+
+</html>
