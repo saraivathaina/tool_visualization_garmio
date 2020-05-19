@@ -65,7 +65,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>    
     <script src="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/jieter/Leaflet-semicircle/Semicircle.js"></script>    
-    <script src="https://cdn.jsdelivr.net/gh/anomal/RainbowVis-JS/rainbowvis.js"></script> 
+    <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/color_gradient.js" type="text/javascript"></script>
+
     
     
     <script>
@@ -112,56 +113,14 @@
             }
         })
 
-/*         var geojsonFeature_All_cells = $.ajax( {
-            url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/Cells_MOS.json",
-            dataType: "json",
-            success: console.log("Data successfully loaded geojsonFeature_All_cells."),
-            error: function(xhr) {
-                alert("Not found Cells.json")
-            }
-        })
-
-        var footprint = $.ajax( {
-            url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/Grid_4G.json",            
-            dataType: "json",
-            success: console.log("Data successfully loaded.footprint"),
-            error: function(xhr) {
-                alert(xhr.statusText)
-            }
-        }) */
-
-        //Gerar um dictionary com cores
-        var numbers_colors=[]
         var min_value=50
         var max_value=129
-        for(var i=min_value;i<=max_value;){            
-            numbers_colors.push(i.toFixed(0))
-            i=i+1
-        }
+        Colors_Signal_dict=color_gradient(min_value,max_value, 'red', 'yellow','blue')  
 
-        var numberOfItems = numbers_colors.length;
-        var rainbow = new Rainbow(); 
-        rainbow.setNumberRange(1, numberOfItems);
-        rainbow.setSpectrum('red', 'yellow','blue');
+        var upper_right_filterCells=[38.748327, -9.131098]
+        var bottom_left_filterCells=[38.735406, -9.156761]
         
-        var colorsFootprint=[]
-        for (var i = 1; i <= numberOfItems; i++) {
-            var hexColour = rainbow.colourAt(i);
-            colorsFootprint.push('#' + hexColour)            
-        }       
-        
-        var Colors_Signal_dict = {};
-        for(i=0; i<numbers_colors.length; i++){
-            Colors_Signal_dict[numbers_colors[i]]=colorsFootprint[i]
-            
-        }        
-        
-
-
-            var upper_right_filterCells=[38.748327, -9.131098]
-            var bottom_left_filterCells=[38.735406, -9.156761]
-        
-        $.when(geojsonFeature,geojsonFeature_All_cells).done(function() {
+        $.when(geojsonFeature,geojsonFeature_cells).done(function() {
         var CenterMap=[38.7421073729593, -9.14334066270453]  
         
         var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
@@ -442,14 +401,6 @@
         }
         })      
         
-        
-        //mean_RSRP_PCI.addTo(LayerAdd_RSRP_Points_with_PCI)
-
-        
-        //make_grid(footprint,LayerAdd_Footprint,Colors_Signal_dict)
-        
-
-
         var layer_legend=L.layerGroup(); 
         var legend = L.control({position: 'bottomleft'});
 
