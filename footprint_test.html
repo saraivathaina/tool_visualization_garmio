@@ -19,7 +19,7 @@
             padding: 0;
         }
 
-        #map {
+        #mymap {
             position: absolute;
             top: 0;
             bottom: 0;
@@ -61,18 +61,33 @@
 </head>
 
 <body>
-    <div id="map"></div>
+    <div id="mymap"></div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>    
     <script src="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/jieter/Leaflet-semicircle/Semicircle.js"></script>  
     <script src="https://cdn.jsdelivr.net/gh/anomal/RainbowVis-JS/rainbowvis.js"></script> 
     <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/color_gradient.js" type="text/javascript"></script>
-    <script src="./Functions/make_footprint_grid.js"></script>  
+    <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/shapes.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/make_footprint_grid.js"></script>  
     
     
+
     <script>
         //<link rel="stylesheet" href="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.css" />
-        var fileName_footprint='4G - 4LB02833B_HOTEL_ALIF - 268-1-2833-4LB02833B_HOTEL_ALIF.json'
+        var results_geolocation = $.ajax( {
+            url: './Inputs/Hotel_alif_one_cell.json',
+            //url: "matrix_mask_list.json",
+            dataType: "json",
+            success: console.log("Hotel_alif_one_cell Data successfully loaded."),
+            error: function(xhr) {
+                alert(xhr.statusText)
+            }
+        })
+        
+        //var first_cell=results_geolocation.responseJSON.features[0]
+        //var fileName_footprint=first_cell.properties.fileName_footprint
+
+        var fileName_footprint='4G - 4LB02833C_HOTEL_ALIF - 268-1-2833-4LB02833C_HOTEL_ALIF.json'
                                                     
         var footprint = $.ajax( {
             url: './Inputs/Footprints/'+fileName_footprint,
@@ -82,13 +97,14 @@
             error: function(xhr) {
                 alert(xhr.statusText)
             }
-        })
+        })       
+
 
         
         
 
         
-        $.when(footprint).done(function() {
+        $.when(footprint,results_geolocation).done(function() {
         var CenterMap=[38.7421073729593, -9.14334066270453]  
         
         var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
@@ -99,12 +115,15 @@
         var satelite= L.tileLayer(mbUrl,  {id: 'mapbox/satellite-v9',   attribution: mbAttr}),
             grayscale=L.tileLayer(mbUrl, {id: 'mapbox/light-v9', attribution: mbAttr});            
         
+        var LayerAdd_Footprint=L.featureGroup();
+        var LayerAdd_ErrorPoints_DriveTest=L.featureGroup();
+        var LayerAdd_ErrorPoints_Traces=L.featureGroup();
         var LayerAdd_Cells=L.featureGroup();
-        //var LayerAdd_Cells_2=L.featureGroup();
-        var map=L.map('map', {
+
+        var mymap=L.map('mymap', {
             center:CenterMap,
             zoom: 14,
-            layers: [satelite,LayerAdd_Cells]
+            layers: [satelite,LayerAdd_Footprint,LayerAdd_Cells,LayerAdd_ErrorPoints_Traces]
         })
 
         var baseLayers = {
@@ -112,45 +131,125 @@
         "Grayscale": grayscale        
 	    }; 
         
-        /* var numbers_colors=[]
-        var min_value=50
-        var max_value=129
-        for(var i=min_value;i<=max_value;){            
-            numbers_colors.push(i.toFixed(0))
-            i=i+1
-        }
-
-        
-        var numberOfItems = numbers_colors.length;
-        var rainbow = new Rainbow(); 
-        rainbow.setNumberRange(1, numberOfItems);
-        rainbow.setSpectrum('red', 'yellow','blue');
-        
-        var colorsFootprint=[]
-        for (var i = 1; i <= numberOfItems; i++) {
-            var hexColour = rainbow.colourAt(i);
-            colorsFootprint.push('#' + hexColour)            
-        }       
-        
-        var Colors_Signal_dict = {};
-        for(i=0; i<numbers_colors.length; i++){
-            Colors_Signal_dict[numbers_colors[i]]=colorsFootprint[i]
-            
-        }        */ 
         var min_value=50
         var max_value=129
         Colors_Signal_dict=color_gradient(min_value,max_value, 'red', 'yellow','blue')  
-        make_grid(footprint,LayerAdd_Cells,Colors_Signal_dict)
+        make_grid(footprint,LayerAdd_Footprint,Colors_Signal_dict)
                 
 
+        function getColorError(value){
+        if(value<=100){
+            return "limegreen"
+        }else if(value>100 && value<=200){
+            return "yellow"
+        }else{
+            return "red"
+        }      
+        }
+        L.geoJSON(results_geolocation.responseJSON,{
+            pointToLayer: function(feature, latlng){
+                var mypopup=L.popup().setContent('Traces: <br>'+feature.properties.popupContent)                
+                var pointTrace=feature.properties.point_traces
+                var pointTrace_latlng=L.latLng(pointTrace[1],pointTrace[0])
+                var mymarker=L.circleMarker(pointTrace_latlng,{color: getColorError(feature.properties.Error),
+                    fillColor: getColorError(feature.properties.Error), 
+                    radius:5,
+                    opacity: 1,
+                    fillOpacity: 0.8 })
+                mymarker.bindPopup(mypopup)    
+                return mymarker                 
+            }
+        }).addTo(LayerAdd_ErrorPoints_Traces)
+
+        L.geoJSON(results_geolocation.responseJSON,{
+            pointToLayer: function(feature, latlng){
+                var mypopup=L.popup().setContent('DriveTest'+feature.properties.popupContent)                
+                var mymarker=L.shapeMarker(latlng,{
+                        color:getColorError(feature.properties.Error),
+                        fillColor: 'black',                        
+                        shape: "x",
+                        radius: 15
+                    })
+                mymarker.bindPopup(mypopup)    
+                return mymarker                 
+            }
+        }).addTo(LayerAdd_ErrorPoints_DriveTest)
+
+        function setStyle_All_Cells(feature) {
+            return {radius: 110,
+            fillColor:  '#BDBBBB',            
+            color: "#666666",
+            fillOpacity: 0.8,
+            opacity: 0.8,
+            weight: 0.5
+            }
+        }
+
+        var first_cell=results_geolocation.responseJSON.features[0]
+        var pointCell=first_cell.properties.cell_point
+        var mypopup =L.popup().setContent(first_cell.properties.cell_name)
+        var pointCell_latlng=L.latLng(pointCell[1],pointCell[0])
+        var azimuth= first_cell.properties.azimuth
+        //var mymarker=L.marker(pointCell_latlng)
+        var mymarker = L.semiCircle(pointCell_latlng, {radius: 410,
+                    fillColor:  '#BDBBBB',            
+                    color: "#666666",
+                    fillOpacity: 0.8,
+                    opacity: 0.6,
+                    weight: 0.5
+                    }).setDirection(azimuth, 50)
+        mymarker.bindPopup(mypopup)
+        mymarker.addTo(LayerAdd_Cells)
         
-            var groupedOverlays = {
+/*         var cells = L.geoJSON(results_geolocation.responseJSON, {        
+        pointToLayer: function (feature, latlng) {                   
+            var mypopup =L.popup().setContent(feature.properties.cell_name)    
+            var pointCell=feature.properties.cell_point 
+            
+            var pointCell_latlng=L.latLng(pointCell[1],pointCell[0])                     
+            var mymarker = L.semiCircle(pointCell_latlng, {radius: 410,
+                    fillColor:  '#BDBBBB',            
+                    color: "#666666",
+                    fillOpacity: 0.8,
+                    opacity: 0.6,
+                    weight: 0.5
+                    }).setDirection(feature.properties.azimuth, 50)
+            mymarker.bindPopup(mypopup)   
+              
+            return mymarker;              
+        }
+        }).addTo(LayerAdd_Cells) */
+
+        var groupedOverlays = {
         "Type Measures":{
-            "4LB02833B_HOTEL_ALIF":LayerAdd_Cells            
+            "4LB02833B_HOTEL_ALIF":LayerAdd_Footprint,
+            'Cell':LayerAdd_Cells,
+            'ErrorPoints DriveTest' :LayerAdd_ErrorPoints_DriveTest,
+            'ErrorPoints Traces' :LayerAdd_ErrorPoints_Traces      
         }
         }  
 
-        var layer_legend=L.layerGroup(); 
+        var legend_Error_positioned = L.control({position: 'topleft'});
+        legend_Error_positioned.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'info legend')               
+            //var labels = [10, 50, 100, 250,350,500]
+	    
+            var values_labels = [100, 200,500]
+            var colors= []
+            for(i=0; i<values_labels.length;i++){
+                colors.push(getColorError(Math.abs(values_labels[i])))
+            }
+            
+            var labels = ["<100", ">100 and <200", ">200"]
+            div.innerHTML += "<h3>Error in Meters</h3>";
+            for (var i = 0; i < colors.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + colors[i] + '"></i> <b>' +
+                    labels[i]+ ' meters</b><br>'
+            }
+            return div;
+        };
+        legend_Error_positioned.addTo(mymap);
         var legend = L.control({position: 'bottomleft'});
 
         legend.onAdd = function(map) {
@@ -171,12 +270,12 @@
             }
             return div;
         };
-        legend.addTo(map);
+        legend.addTo(mymap);
 
         var layerControl = L.control.groupedLayers(baseLayers, groupedOverlays);
 
        
-        map.addControl(layerControl);
+        mymap.addControl(layerControl);
        
 
 
