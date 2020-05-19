@@ -1,0 +1,9 @@
+/ParsePython
+
+*.pyc
+.ipynb_checkpoints
+.notebook
+.vscode
+/.ipynb_checkpoints
+/.notebook
+/.vscode
