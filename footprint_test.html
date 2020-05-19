@@ -68,14 +68,16 @@
     <script src="https://cdn.jsdelivr.net/gh/anomal/RainbowVis-JS/rainbowvis.js"></script> 
     <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/color_gradient.js" type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/shapes.js" type="text/javascript"></script>
-    <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/make_footprint_grid.js"></script>  
+    <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/make_footprint_grid.js" type="text/javascript"></script>  
     
     
 
     <script>
         //<link rel="stylesheet" href="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.css" />
+        var url_inputs=   'https://raw.githubusercontent.com/saraivathaina/tool_visualization_garmio/master/Inputs/'                                         
+        var path_inputs='./Inputs/'
         var results_geolocation = $.ajax( {
-            url: './Inputs/Hotel_alif_one_cell.json',
+            url: url_inputs+'Hotel_alif_one_cell.json',
             //url: "matrix_mask_list.json",
             dataType: "json",
             success: console.log("Hotel_alif_one_cell Data successfully loaded."),
@@ -88,9 +90,10 @@
         //var fileName_footprint=first_cell.properties.fileName_footprint
 
         var fileName_footprint='4G - 4LB02833C_HOTEL_ALIF - 268-1-2833-4LB02833C_HOTEL_ALIF.json'
-                                                    
+        var url_footprint=   'https://raw.githubusercontent.com/saraivathaina/tool_visualization_garmio/master/Inputs/Footprints/'                                         
+        var path_footprint='./Inputs/Footprints/'
         var footprint = $.ajax( {
-            url: './Inputs/Footprints/'+fileName_footprint,
+            url: url_footprint+fileName_footprint,
             //url: "matrix_mask_list.json",
             dataType: "json",
             success: console.log("Data successfully loaded."),
