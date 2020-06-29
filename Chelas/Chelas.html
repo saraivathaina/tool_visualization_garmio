@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Exemplo GeoJson</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+    crossorigin=""/>
+
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+    integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+    crossorigin=""></script>
+
+    <style> 
+        div#map{
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            left: 0px;
+            top: 0px;
+        }   
+
+        .legend {
+        line-height: 18px;
+        height: 120px;
+        width: 150px;
+        color: #555;
+        background: rgb(255, 255, 255);
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;            
+            margin-right: 8px;
+            opacity: 05;
+        }
+    
+    </style>
+
+</head>
+<body>
+    <div id='map'></div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>    
+    <script src="http://www.gistechsolutions.com/leaflet/DEMO/senate/src/leaflet.groupedlayercontrol.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jieter/Leaflet-semicircle/Semicircle.js"></script>    
+    <script src="https://cdn.jsdelivr.net/gh/saraivathaina/tool_visualization_garmio/Functions/read_csv.js" type="text/javascript"></script> 
+    
+    <script>
+        
+
+    // var csv_file=$.ajax({
+    //             type: "GET",                
+    //             //url: "./Inputs/ErrorMapping.csv",
+    //             url: "https://raw.githubusercontent.com/saraivathaina/tool_visualization_garmio/master/Inputs/ErrorMapping.csv",
+    //             dataType: "csv",
+    //             async: false,
+    //             success: console.log('ok ErrorMapping.csv')
+    //         });    
+    // var csv_file_String=String(csv_file.responseText)
+    // var input_file_json_Cells=csvJSON(csv_file_String)
+    //Colors_Error_dict=color_gradient(0,500, 'limegreen', "yellow",'red')  
+    
+    var Cells = $.ajax( {
+            //url: "https://raw.githubusercontent.com/saraivathaina/Load_Data_from_GitHub/master/inputs/Cells_MOS.json",
+            type: "GET", 
+            url:"./Inputs/Dump CHELAS_L800.csv",
+            dataType: "csv",
+            async: false,
+            success: console.log("Data successfully loaded geojsonFeature_cells."),
+            
+        })
+    var Cells_String=String(Cells.responseText)
+    //console.info(Cells_String)
+    var input_file_json_Cells=csvJSON(Cells_String)
+
+
+    $.when(input_file_json_Cells).done(function() {  
+    var CenterMap=[parseFloat(input_file_json_Cells[0]["Latitude"]), parseFloat(input_file_json_Cells[0]["Longitude"])]
+    
+    var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+			'<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoidGhhaW5hc2FyYWl2YSIsImEiOiJjazVxdWIwcWMwNXZ2M29wYjVhdWMwdWptIn0._MlDbldKD_Y407LNS5IXiA';
+    var satelite= L.tileLayer(mbUrl,  {id: 'mapbox/satellite-v9',   attribution: mbAttr}),
+        grayscale=L.tileLayer(mbUrl, {id: 'mapbox/light-v9', attribution: mbAttr});            
+        
+    
+    var LayerAdd_Cells=L.layerGroup();
+
+    var overlayMaps = {    
+    "Cells":LayerAdd_Cells
+    };
+
+    var mymap=L.map('map', {
+            center:CenterMap,
+            zoom: 15,
+            layers: [grayscale,LayerAdd_Cells]
+        })    
+    var baseLayers = {
+        "Satelite":satelite,
+        "Grayscale": grayscale        
+	    }; 
+    
+      
+        function setStyle_All_Cells() {
+            return {radius: 110,
+            fillColor:  '#0843C6',            
+            color: "#666666",
+            fillOpacity: 0.8,
+            opacity: 0.8,
+            weight: 0.5
+            }
+        }
+    
+    for(var i=0; i<input_file_json_Cells.length;i++){
+        var Point=[parseFloat(input_file_json_Cells[i]["Latitude"]), parseFloat(input_file_json_Cells[i]["Longitude"])]
+        //msg_cell=input_file_json_Cells[i][Object.keys(input_file_json_Cells[i])[Object.keys(input_file_json_Cells[i]).length-1]]//Selecionar a ultima coluna
+        //var error=Math.abs((parseFloat(input_file_json_Cells[i]["Azimuth"])*1000).toFixed(0))
+        //Azimuth
+        let azimuth=input_file_json_Cells[i][Object.keys(input_file_json_Cells[i])[Object.keys(input_file_json_Cells[i]).length-1]]
+        var mypopup = L.popup().setContent(input_file_json_Cells[i]['LocalCellName'])
+        // L.shapeMarker(L.latLng(Point),{                           
+        //                 color:getColorError(error),   
+        //                 weight: 2,                                                                
+        //                 shape: "x",
+        //                 radius: 10} )
+        // .addTo(LayerAdd_DriveTest) 
+        // .bindPopup(mypopup) 
+        L.semiCircle(L.latLng(Point), setStyle_All_Cells())
+        .setDirection(parseFloat(azimuth), 50)
+        .addTo(LayerAdd_Cells) 
+        .bindPopup(mypopup) 
+    }
+
+    
+    
+    
+    var overlayMaps = {
+    "Cells":LayerAdd_Cells
+    };
+
+    
+    
+    
+    L.control.layers(baseLayers, overlayMaps).addTo(mymap);
+       
+    
+    
+
+    
+
+    });
+
+
+
+
+
+
+
+
+
+
+    </script>
+    
+</body>
+</html>
