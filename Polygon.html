@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn-webgl.wrld3d.com/wrldjs/dist/latest/wrld.js"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.1/leaflet.css"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div style="position: relative">
+      <div id="map" style="height: 400px"></div>
+      <script>
+        function lineDistance(point1, point2) {
+          var xs = 0;
+          var ys = 0;
+
+          xs = point2.x - point1.x;
+          xs = xs * xs;
+
+          ys = point2.y - point1.y;
+          ys = ys * ys;
+
+          return Math.sqrt(xs + ys);
+        }
+
+        function makeContour(points) {
+          var minX = points[0].x;
+          var maxX = points[0].x;
+          var minY = points[0].y;
+          var maxY = points[0].y;
+
+          for (var i = 1; i < points.length; i++) {
+            if (points[i].x < minX) minX = points[i].x;
+            if (points[i].x > maxX) maxX = points[i].x;
+            if (points[i].y < minY) minY = points[i].y;
+            if (points[i].y > maxY) maxY = points[i].y;
+          }
+
+          // choose a "central" point
+          var center = {
+            x: minX + (maxX - minX) / 2,
+            y: minY + (maxY - minY) / 2,
+          };
+
+          // precalculate the angles of each point to avoid multiple calculations on sort
+          for (var i = 0; i < points.length; i++) {
+            points[i].angle = Math.acos(
+              (points[i].x - center.x) / lineDistance(center, points[i])
+            );
+
+            if (points[i].y > center.y) {
+              points[i].angle = Math.PI + Math.PI - points[i].angle;
+            }
+          }
+
+          // sort by angle
+          points = points.sort(function (a, b) {
+            return a.angle - b.angle;
+          });
+          return points;
+        }
+
+        var map = L.Wrld.map('map', 'your_api_key_here', {
+          center: [38.7429836, -9.1422118],
+          zoom: 15,
+        });
+
+        var polygonPoints = [
+          [38.7429836, -9.1422118, '3'],
+          [38.7438666666667, -9.180225, '3'],
+          [38.7451344444444, -9.18515111111111, '3'],
+          [38.7518541666667, -9.20959930555555, '3'],
+          [38.7471041666667, -9.20757291666667, '5'],
+          [38.7499249206349, -9.20231936507936, '5'],
+          [38.7531153333333, -9.20594144444445, '5'],
+          [38.7518833333333, -9.21069444444444, '5'],
+        ];
+
+        var Points = polygonPoints.map((value) => {
+          return {x: value[0], y: value[1], group: value[2]};
+        });
+
+        Points = Points.reduce(function (r, a) {
+          r[a.group] = r[a.group] || [];
+          r[a.group].push(a);
+          return r;
+        }, Object.create(null));
+        console.log(Points);
+        
+        for (const [key, value] of Object.entries(Points)) {
+          console.log(key, value);
+          var temp1 = makeContour(value);
+          polygonPoints = temp1.map((value) => [value.x, value.y]);
+
+          console.log(polygonPoints);
+          var poly = L.polygon(polygonPoints,{fillColor: "#ff7800",
+    // color: "#000",
+     weight: 0,
+    // opacity: 1,
+    fillOpacity: 0.5}).addTo(map);
+
+          for (var i = 0; i < polygonPoints.length; i++) {
+            marker = new L.marker([polygonPoints[i][0], polygonPoints[i][1]]);
+            marker.addTo(map).bindTooltip(key);
+          }
+        }
+      </script>
+    </div>
+  </body>
+</html>
