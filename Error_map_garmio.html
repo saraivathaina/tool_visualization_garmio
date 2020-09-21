@@ -23,17 +23,21 @@
         }   
 
         .legend {
-        line-height: 18px;
-        height: 120px;
-        width: 150px;
-        color: #555;
+        /* line-height: 18px; */
+        display: flex;
+         height: 50px;
+        width: 300px; 
+        color: #555;        
+        
         background: rgb(255, 255, 255);
         }
         .legend i {
-            width: 18px;
-            height: 18px;
-            float: left;            
-            margin-right: 8px;
+            width: 40px;
+            height: 30px;
+            float: left;     
+            align-items: left;       
+            margin-right: 1px;
+            margin-left: 10px;
             opacity: 05;
         }
     
@@ -97,7 +101,7 @@
     var mymap=L.map('map', {
             center:CenterMap,
             zoom: 15,
-            layers: [satelite,LayerAdd_DriveTest]
+            layers: [satelite,LayerAdd_DriveTest,LayerAdd_Cells]
         })    
     var baseLayers = {
         "Satelite":satelite,
@@ -160,7 +164,7 @@
     getColorBand_dict={800:'#07366B',
            // 900: 'purple',
             1800:'#2785AE',            
-             2100:  '#27AAAE',
+             2100:  '#4B95C2',
             2600:  '#0DCDC7'
     }
     function getColorBand(feature){
@@ -231,8 +235,8 @@
             div.innerHTML += "<h3>Band</h3>";
             for (var i = 0; i < labels.length; i++) {
                 div.innerHTML +=
-                    '<i style="background:' + colors[i] + '"></i> <b>' +
-                    labels[i]+ ' MHz</b><br>'
+                    '<i style="background:' + colors[i] + '"></i> ' +
+                    labels[i]+ ' MHz<br>'
             }
             return div;
         };
